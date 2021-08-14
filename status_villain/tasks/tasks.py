@@ -56,8 +56,49 @@ class InteractiveLoginInputModel(BaseModel):
 
 
 class BaseTask(ABC):
+    def __init__(self):
+        self.is_authed_user: bool = False
+
     def run(self):
         ...
+
+    def attempt_login(self):
+        _credentials = {}
+        if DEFAULT_PROFILES_FILE.exists():
+            with open(DEFAULT_PROFILES_FILE, "r") as file:
+                _credentials = yaml.safe_load(file)
+                self.credentials = UserInfoInputModel(**_credentials)
+        else:
+            login_prompts = [
+                {"type": "text", "name": "email", "message": "e-mail address"},
+                {"type": "text", "name": "username", "message": "Username"},
+                {"type": "password", "name": "password", "message": "Password"},
+            ]
+            user_info = questionary.prompt(login_prompts)
+            self.credentials = InteractiveLoginInputModel(**user_info)
+
+        if self.credentials:
+            self.is_authed_user = self.authenticate()
+            if self.is_authed_user is False:
+                console.print("Could not authenticate, check your credentials")
+        else:
+            return
+
+    def authenticate(self) -> bool:
+        with database_connector.session_manager() as session:
+            user_password = (
+                session.query(User.password)
+                .filter(
+                    User.email == self.credentials.email, User.username == self.credentials.username
+                )
+                .first()
+            )
+            if user_password:
+                stored_password = user_password[0]
+                is_valid_user = check_password(stored_password, self.credentials.password)
+                return is_valid_user
+            else:
+                return False
 
 
 class InitTask(BaseTask):
@@ -122,45 +163,7 @@ class InitTask(BaseTask):
 
 class ReportTask(BaseTask):
     def __init__(self) -> None:
-        self.is_authed_user: bool
-
-    def attempt_login(self):
-        _credentials = {}
-        if DEFAULT_PROFILES_FILE.exists():
-            with open(DEFAULT_PROFILES_FILE, "r") as file:
-                _credentials = yaml.safe_load(file)
-                self.credentials = UserInfoInputModel(**_credentials)
-        else:
-            login_prompts = [
-                {"type": "text", "name": "email", "message": "e-mail address"},
-                {"type": "text", "name": "username", "message": "Username"},
-                {"type": "password", "name": "password", "message": "Password"},
-            ]
-            user_info = questionary.prompt(login_prompts)
-            self.credentials = InteractiveLoginInputModel(**user_info)
-
-        if self.credentials:
-            self.is_authed_user = self.authenticate()
-            if self.is_authed_user is False:
-                console.print("Could not authenticate, check your credentials")
-        else:
-            return
-
-    def authenticate(self) -> bool:
-        with database_connector.session_manager() as session:
-            user_password = (
-                session.query(User.password)
-                .filter(
-                    User.email == self.credentials.email, User.username == self.credentials.username
-                )
-                .first()
-            )
-            if user_password:
-                stored_password = user_password[0]
-                is_valid_user = check_password(stored_password, self.credentials.password)
-                return is_valid_user
-            else:
-                return False
+        ...
 
     def run(self):
         self.attempt_login()
