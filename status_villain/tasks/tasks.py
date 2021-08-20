@@ -1,15 +1,19 @@
+import uuid
 from abc import ABC
+from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional
 
 import questionary
 import yaml
 from pydantic import BaseModel
 from rich.console import Console
+from rich.markdown import Markdown
+from sqlalchemy.exc import IntegrityError
 
 from status_villain.commands import check_password, create_user
 from status_villain.database import database_connector
-from status_villain.models import User
+from status_villain.models import Message, User
 
 console = Console()
 
@@ -69,6 +73,7 @@ class BaseTask(ABC):
                 _credentials = yaml.safe_load(file)
                 self.credentials = UserInfoInputModel(**_credentials)
         else:
+            # TODO: Maybe I should look into importing those prompts from the init task
             login_prompts = [
                 {"type": "text", "name": "email", "message": "e-mail address"},
                 {"type": "text", "name": "username", "message": "Username"},
@@ -163,21 +168,85 @@ class InitTask(BaseTask):
 
 class ReportTask(BaseTask):
     def __init__(self) -> None:
-        ...
+        # we will need to check that there are credentials or ask for user to log in.
+        self.attempt_login()
+
+    @staticmethod
+    def calculate_streak_length(user_reports: List[Message]) -> int:
+        completion_list = [message.has_completed_yesterday for message in user_reports]
+        streak_length = 0
+        for i in completion_list:
+            if i:
+                streak_length += 1
+            else:
+                break
+        return streak_length
+
+    def get_user_report_messages(self):
+        with database_connector.session_manager() as session:
+            user_status_reports = (
+                session.query(Message)
+                .filter(Message.user_id == self.credentials.email)
+                .order_by(Message.created_at.desc())
+                .all()
+            )
+            if user_status_reports is not None:
+                streak_length = self.calculate_streak_length(user_reports=user_status_reports)
+                if streak_length > 1:
+                    streak_celebration_prefix = (
+                        f"\n:sports_medal: You're on a [purple][bold]{streak_length}[/purple][/bold]-day "
+                        "completion streak! Keep it up!\n"
+                    )
+                    console.print(streak_celebration_prefix, justify="center")
+                md_message = f"# Yesterday\n{user_status_reports[0].today_message}"
+                md_message = Markdown(md_message)
+                console.print(md_message)
+                # this is to hack a new line because markdown conversion removes it anyway
+                console.print("\n")
+                return user_status_reports[0].today_message
+            return None
+
+    def update_user_report(self, yesterday_message: Optional[str]):
+        message_id = uuid.uuid1()
+        try:
+            today_report_message = questionary.text(
+                message="What are you planning to do today?", multiline=True
+            ).unsafe_ask()
+            has_completed_yesterday = False
+            if yesterday_message:
+                has_completed_yesterday = questionary.confirm(
+                    "Did you complete all of yesterday's goals?"
+                ).unsafe_ask()
+            elif has_completed_yesterday is False or yesterday_message is None:
+                yesterday_message = questionary.text(
+                    message="What did you do yesterday?", multiline=True
+                ).unsafe_ask()
+
+        except KeyboardInterrupt:
+            console.print("[red]Status report interrupted by user. Nothing saved.")
+            return None
+
+        report = Message(
+            id=message_id,
+            user_id=self.credentials.email,
+            created_at=datetime.utcnow(),
+            today_message=today_report_message,
+            yesterday_message=yesterday_message,
+            has_completed_yesterday=has_completed_yesterday,
+        )
+
+        with database_connector.session_manager() as session:
+            try:
+                session.add(report)
+                session.commit()
+                console.print(
+                    "Status report [green]completed[/green]. [purple]Have a fantastic day![/purple]"
+                )
+            except IntegrityError:
+                print(f"A report with {message_id} already exists")
+                return
 
     def run(self):
-        self.attempt_login()
-        # we will need to check that there are credentials or ask for user to log in.
-
         # get the potential previous status report for this user.
-
-        # if we have it display it in a nice fashion using `rich` markdown rendering capabilities
-
-        # did you complete all your tasks from yesterday
-        #    # if so, we will set a "completed" boolean --which is going to be nice to display streaks
-        #    # and we will pre-fill yesterdays message for "today" with the content of yeterday.
-        #    # if not, we pop a txt editor and allow the user to write an amended version of his yesterday status.
-
-        # pop an editor again to ask for TODAY's update.
-
-        # persist reports to the messages tables.
+        user_last_status_report = self.get_user_report_messages()
+        self.update_user_report(yesterday_message=user_last_status_report)
