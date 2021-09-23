@@ -190,7 +190,7 @@ class ReportTask(BaseTask):
                 .order_by(Message.created_at.desc())
                 .all()
             )
-            if user_status_reports is not None:
+            if user_status_reports:
                 streak_length = self.calculate_streak_length(user_reports=user_status_reports)
                 if streak_length > 1:
                     streak_celebration_prefix = (

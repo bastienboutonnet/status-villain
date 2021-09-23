@@ -10,7 +10,7 @@ from status_villain.database import SQLAlchemyBase
 
 
 class User(SQLAlchemyBase):
-    __tablename__ = "user"
+    __tablename__ = "users"
     id = Column(String)
     email = Column(String, primary_key=True)
     # TODO: warn the user about the charactere limit on user so that we dont
@@ -30,9 +30,9 @@ class User(SQLAlchemyBase):
 
 
 class Message(SQLAlchemyBase):
-    __tablename__ = "message"
+    __tablename__ = "status_reports"
     id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("user.email"))
+    user_id = Column(String, ForeignKey("users.email"))
     created_at = Column(DateTime)
     today_message = Column(String)
     yesterday_message = Column(String)
