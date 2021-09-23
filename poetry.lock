@@ -399,6 +399,32 @@ toml = "*"
 testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-datafiles"
+version = "2.0"
+description = "py.test plugin to create a 'tmpdir' containing predefined files/directories."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+py = "*"
+pytest = ">=3.6"
+
+[[package]]
+name = "pytest-mock"
+version = "3.6.1"
+description = "Thin-wrapper around the mock package for easier use with pytest"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+pytest = ">=5.0"
+
+[package.extras]
+dev = ["pre-commit", "tox", "pytest-asyncio"]
+
+[[package]]
 name = "pyyaml"
 version = "5.4.1"
 description = "YAML parser and emitter for Python"
@@ -535,7 +561,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "fab7bd5da8d83cc424c36100021f4c89e2d2ec2a3f731bd983c5ab93858dc77f"
+content-hash = "add2440f8cf8defc7f8746aacf24e0b237ca9674612a0a1be9377d5a65750fed"
 
 [metadata.files]
 appnope = [
@@ -805,6 +831,14 @@ pytest = [
 pytest-cov = [
     {file = "pytest-cov-2.12.1.tar.gz", hash = "sha256:261ceeb8c227b726249b376b8526b600f38667ee314f910353fa318caa01f4d7"},
     {file = "pytest_cov-2.12.1-py2.py3-none-any.whl", hash = "sha256:261bb9e47e65bd099c89c3edf92972865210c36813f80ede5277dceb77a4a62a"},
+]
+pytest-datafiles = [
+    {file = "pytest-datafiles-2.0.tar.gz", hash = "sha256:143329cbb1dbbb07af24f88fa4668e2f59ce233696cf12c49fd1c98d1756dbf9"},
+    {file = "pytest_datafiles-2.0-py2.py3-none-any.whl", hash = "sha256:e349b6ad7bcca111f3677b7201d3ca81f93b5e09dcfae8ee2be2c3cae9f55bc7"},
+]
+pytest-mock = [
+    {file = "pytest-mock-3.6.1.tar.gz", hash = "sha256:40217a058c52a63f1042f0784f62009e976ba824c418cced42e88d5f40ab0e62"},
+    {file = "pytest_mock-3.6.1-py3-none-any.whl", hash = "sha256:30c2f2cc9759e76eee674b81ea28c9f0b94f8f0445a1b87762cadf774f0df7e3"},
 ]
 pyyaml = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},
