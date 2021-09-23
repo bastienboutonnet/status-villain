@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Boolean, Column, DateTime, String
 from sqlalchemy.sql.schema import ForeignKey
 
 from status_villain.database import SQLAlchemyBase
@@ -10,7 +10,7 @@ from status_villain.database import SQLAlchemyBase
 
 
 class User(SQLAlchemyBase):
-    __tablename__ = "user"
+    __tablename__ = "users"
     id = Column(String)
     email = Column(String, primary_key=True)
     # TODO: warn the user about the charactere limit on user so that we dont
@@ -22,9 +22,6 @@ class User(SQLAlchemyBase):
     created_at = Column(DateTime)
 
 
-# TODO: create a "onboarding/user creation flow"
-# TODO: think about authentication --which I know nothing about
-
 # standup messages table
 # # message_id PK
 # # user_id FK on users table
@@ -33,14 +30,13 @@ class User(SQLAlchemyBase):
 
 
 class Message(SQLAlchemyBase):
-    __tablename__ = "message"
+    __tablename__ = "status_reports"
     id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("user.id"))
+    user_id = Column(String, ForeignKey("users.email"))
     created_at = Column(DateTime)
-    message_content = Column(String)
+    today_message = Column(String)
+    yesterday_message = Column(String)
+    has_completed_yesterday = Column(Boolean)
 
-
-# TODO: create a message input flow
-# TODO: have a query that allows to grab "yesterday's standup message"
 
 # Orgnanisation Table?
