@@ -18,7 +18,17 @@ class Question:
 @pytest.mark.datafiles(TEST_DIR)
 def test_create_profiles_dir(datafiles):
 
-    profiles_dir_path = datafiles  # noqa: F811
+    profiles_dir_path = datafiles
+
+    init_task = InitTask(profiles_dir_path=profiles_dir_path)
+    init_task.create_profiles_dir()
+    assert Path(profiles_dir_path).exists()
+
+
+@pytest.mark.datafiles(TEST_DIR)
+def test_create_profiles_dir_not_exist(datafiles):
+
+    profiles_dir_path = Path(datafiles).joinpath("nest")
 
     init_task = InitTask(profiles_dir_path=profiles_dir_path)
     init_task.create_profiles_dir()
@@ -29,7 +39,7 @@ def test_create_profiles_dir(datafiles):
 def test_create_profiles_file(datafiles, mocker):
     from status_villain.tasks.tasks import UserInfoInputModel
 
-    profiles_dir_path = datafiles  # noqa: F811
+    profiles_dir_path = datafiles
     profiles_file_path = Path(profiles_dir_path).joinpath("credentials.yaml")
     # mock the user input
     mocker.patch("questionary.confirm", return_value=Question(True))
@@ -87,7 +97,7 @@ def test_persist_credentials_no_user_info(datafiles, mocker):
 
 @pytest.mark.datafiles(TEST_DIR)
 def test_run(datafiles, mocker, monkeypatch):
-    profiles_dir_path = datafiles  # noqa: F811
+    profiles_dir_path = datafiles
     profiles_file_path = Path(profiles_dir_path).joinpath("credentials.yaml")
     # mock the user input
     mocker.patch("questionary.confirm", return_value=Question(True))
