@@ -107,29 +107,33 @@ class BaseTask(ABC):
 
 
 class InitTask(BaseTask):
-    def __init__(self):
+    def __init__(
+        self, profiles_dir_path=DEFAULT_PROFILES_DIR, profiles_file_path=DEFAULT_PROFILES_FILE
+    ):
         self.username: str
         self.first_name: str
         self.last_name: str
         self.password: str
         self.user_info: UserInfoInputModel
+        self.profiles_dir_path = profiles_dir_path
+        self.profiles_file_path = profiles_file_path
 
     def create_profiles_dir(self):
-        if not DEFAULT_PROFILES_DIR.exists():
-            make_dir(DEFAULT_PROFILES_DIR)
+        if not self.profiles_dir_path.exists():
+            make_dir(self.profiles_dir_path)
 
     def create_profiles_file(self):
-        if not DEFAULT_PROFILES_FILE.exists():
-            make_file(DEFAULT_PROFILES_FILE, self.user_info.dict())
+        if not self.profiles_file_path.exists():
+            make_file(self.profiles_file_path, self.user_info.dict())
         else:
             response = questionary.confirm(
-                f"A credentials file already exists at {DEFAULT_PROFILES_FILE}. Do you want to overwrite it?"
+                f"A credentials file already exists at {self.profiles_file_path}. Do you want to overwrite it?"
             ).ask()
             if response is True:
-                make_file(DEFAULT_PROFILES_FILE, self.user_info.dict())
+                make_file(self.profiles_file_path, self.user_info.dict())
             else:
                 raise CredentialsFilesAlreadyPopulated(
-                    f"A credentials file already exists at {DEFAULT_PROFILES_FILE}. "
+                    f"A credentials file already exists at {self.profiles_file_path}. "
                     "Please update it with your new credentials if they have changed"
                 )
 
@@ -137,8 +141,6 @@ class InitTask(BaseTask):
         if self.user_info is not None:
             self.create_profiles_dir()
             self.create_profiles_file()
-        else:
-            raise AttributeError("user_info was not filled in")
 
     def run(self):
         questions = [

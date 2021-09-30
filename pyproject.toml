@@ -19,6 +19,8 @@ pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
 pre-commit = "^2.13.0"
 ipython = "^7.26.0"
+pytest-datafiles = "^2.0"
+pytest-mock = "^3.6.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -26,3 +28,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 status-villain="status_villain.main:main"
+
+[tool.pytest.ini_options]
+markers = ["datafiles"]
