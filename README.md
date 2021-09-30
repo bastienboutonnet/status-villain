@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/bastienboutonnet/status-villain/branch/main/graph/badge.svg?token=HJ1VZ57XYL)](https://codecov.io/gh/bastienboutonnet/status-villain)
+
 # status-villain
 
 A CLI clone of [Status Hero](https://statushero.com) for Engineers and terminal nerds.
