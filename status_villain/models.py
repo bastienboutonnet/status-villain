@@ -1,12 +1,8 @@
 from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import ForeignKey
 
 from status_villain.database import SQLAlchemyBase
-
-# users table
-# # user_id PK
-# # user_name
-# # created_at
 
 
 class User(SQLAlchemyBase):
@@ -21,12 +17,8 @@ class User(SQLAlchemyBase):
     last_name = Column(String)
     created_at = Column(DateTime)
 
-
-# standup messages table
-# # message_id PK
-# # user_id FK on users table
-# # created_at
-# # message_content
+    # relationships
+    status_reports = relationship("Message", back_populates="user")
 
 
 class Message(SQLAlchemyBase):
@@ -37,6 +29,9 @@ class Message(SQLAlchemyBase):
     today_message = Column(String)
     yesterday_message = Column(String)
     has_completed_yesterday = Column(Boolean)
+
+    # relationships
+    user = relationship("User", back_populates="status_reports")
 
 
 # Orgnanisation Table?

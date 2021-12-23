@@ -5,7 +5,7 @@ from typing import List, Optional
 from rich.console import Console
 
 from status_villain.database import database_connector
-from status_villain.tasks.tasks import InitTask, ReportTask
+from status_villain.tasks.tasks import DashboardTask, InitTask, ReportTask
 
 # TODO: allow users to store credentials in a local file so that
 # they do not have to authenticate every time they need to add to their standup.
@@ -22,7 +22,12 @@ init_subparser = subparser.add_parser("init", help="Helps you setup")
 init_subparser.set_defaults(cls=InitTask, which="init")
 
 report_subparser = subparser.add_parser("report", help="Let's you write your status report.")
-init_subparser.set_defaults(cls=InitTask, which="report")
+init_subparser.set_defaults(cls=ReportTask, which="report")
+
+dashboard_subparser = subparser.add_parser(
+    "dashboard", help="Shows everyone's today's status report"
+)
+dashboard_subparser.set_defaults(cls=DashboardTask, which="dashboard")
 
 
 def handle(parser: argparse.ArgumentParser, test_cli_args: Optional[List[str]] = None):
@@ -43,6 +48,9 @@ def handle(parser: argparse.ArgumentParser, test_cli_args: Optional[List[str]] =
         task.run()
     elif parsed_args.command == "report":
         task = ReportTask()
+        task.run()
+    elif parsed_args.command == "dashboard":
+        task = DashboardTask()
         task.run()
     else:
         print(f"{parsed_args.command} is not implemented")

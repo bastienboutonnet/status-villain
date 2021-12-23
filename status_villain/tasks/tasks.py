@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from rich.console import Console
 from rich.markdown import Markdown
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import func
 
 from status_villain.commands import check_password, create_user
 from status_villain.database import database_connector
@@ -104,6 +105,75 @@ class BaseTask(ABC):
                 return is_valid_user
             else:
                 return False
+
+
+class DashboardTask(BaseTask):
+    def __init__(self):
+        self.attempt_login()
+
+    # query all the users latest reports
+    # # we want to make sure we're only printing yesterdays message
+    # ## at least not different dates in case someone didn't fill up their standup yesterday
+    # ## we don't want to show their yesterday yesterday standup -- Need to be somehow
+    # ## date aware...
+    # # we want to make sure we show all users? I.e. even if Joe doesn't have a standup
+    # # we want to show that they are yet to fill it in. --this means we need to know all the users
+    # ## not just querying from the status_reports table but rather from the users table and going down.
+    # # calculate streaks for each users (or at least to know if a user is on a streak)
+    # find a way to display everyone's messages in an "elegant" way... whataver that means
+    @staticmethod
+    def get_user_latest_today_message(user_id: str) -> Message:
+        with database_connector.session_manager() as session:
+            today_latest_report = (
+                session.query(Message)
+                .filter(
+                    func.date(Message.created_at) == datetime.utcnow().date(),
+                    Message.user_id == user_id,
+                )
+                .order_by(Message.created_at.desc())
+                .first()
+            )
+            return today_latest_report
+
+    def get_all_users_reports(self):
+        # TODO: we want to make sure we also show emtpy messages for users who
+        # did not fill yesterdays report (means we probably want to got parent > child)
+        with database_connector.session_manager() as session:
+            users = session.query(User.email, User.first_name, User.last_name).all()
+            user_shit = session.query(User.status_reports).first()
+            print(user_shit)
+            self.reports = []
+            for user in users:
+                report = self.get_user_latest_today_message(user_id=user.email)
+                if report is not None:
+                    self.reports.append(
+                        {
+                            "user": f"{user.first_name} {user.last_name}",
+                            "user_report_today": report.today_message,
+                            "user_report_yesterday": report.yesterday_message,
+                        }
+                    )
+                else:
+                    self.reports.append(
+                        {
+                            "user": f"{user.first_name} {user.last_name}",
+                            "user_report_today": None,
+                            "user_report_yesterday": None,
+                        }
+                    )
+
+    def display_reports(self):
+        for report in self.reports:
+            md_name_header = f"# {report['user']}"
+            console.print(Markdown(md_name_header))
+            console.print("[green][bold]TODAY:")
+            console.print(Markdown(f"{report['user_report_today']}"))
+            console.print("\n[yellow][bold]YESTERDAY:")
+            console.print(Markdown(f"{report['user_report_yesterday']}"))
+
+    def run(self):
+        self.get_all_users_reports()
+        self.display_reports()
 
 
 class InitTask(BaseTask):
